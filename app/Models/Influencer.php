@@ -7,7 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 
-class Brand extends Authenticatable
+class Influencer extends Authenticatable
 {
     use HasFactory, Notifiable;
 
@@ -17,15 +17,21 @@ class Brand extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'company_name',
+        'first_name',
+        'last_name',
+        'username',
         'email',
         'password',
-        'contact_person',
         'phone',
-        'company_description',
-        'website',
-        'industry',
-        'logo',
+        'bio',
+        'date_of_birth',
+        'gender',
+        'profile_picture',
+        'social_media_platforms',
+        'categories',
+        'followers_count',
+        'engagement_rate',
+        'media_kit',
         'status',
     ];
 
@@ -49,6 +55,10 @@ class Brand extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'date_of_birth' => 'date',
+            'social_media_platforms' => 'json',
+            'categories' => 'json',
+            'engagement_rate' => 'decimal:2',
         ];
     }
 
@@ -57,6 +67,14 @@ class Brand extends Authenticatable
      */
     public function getGuardAttribute()
     {
-        return 'brand';
+        return 'influencer';
+    }
+
+    /**
+     * Get the full name attribute.
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->last_name;
     }
 }

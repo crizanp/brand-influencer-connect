@@ -7,7 +7,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Illuminate\Database\Eloquent\Model;
 
-class Brand extends Authenticatable
+class Admin extends Authenticatable
 {
     use HasFactory, Notifiable;
 
@@ -17,16 +17,11 @@ class Brand extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'company_name',
+        'name',
         'email',
         'password',
-        'contact_person',
-        'phone',
-        'company_description',
-        'website',
-        'industry',
-        'logo',
-        'status',
+        'role',
+        'is_active',
     ];
 
     /**
@@ -49,6 +44,7 @@ class Brand extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_active' => 'boolean',
         ];
     }
 
@@ -57,6 +53,14 @@ class Brand extends Authenticatable
      */
     public function getGuardAttribute()
     {
-        return 'brand';
+        return 'admin';
+    }
+
+    /**
+     * Check if admin is super admin.
+     */
+    public function isSuperAdmin()
+    {
+        return $this->role === 'super_admin';
     }
 }
