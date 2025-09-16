@@ -12,17 +12,17 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
 </head>
-<body class="font-sans antialiased bg-gray-50">
-    <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0">
-        <div class="mb-8">
-            <a href="/" class="text-2xl font-bold text-primary-600">
+<body>
+    <div class="auth-container">
+        <div class="logo">
+            <a href="/">
                 Brand Influencer Connect
             </a>
         </div>
 
-        <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+        <div class="auth-card">
             @yield('content')
         </div>
     </div>

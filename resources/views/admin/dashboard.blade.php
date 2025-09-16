@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.dashboard', ['userType' => 'admin'])
 
 @section('title', 'Admin Dashboard')
 

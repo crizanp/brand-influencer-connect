@@ -1,4 +1,4 @@
-@extends('layouts.dashboard')
+@extends('layouts.dashboard', ['userType' => 'influencer'])
 
 @section('title', 'Influencer Dashboard')
 

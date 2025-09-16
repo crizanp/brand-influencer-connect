@@ -12,61 +12,44 @@
     <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
 
     <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    @if(isset($userType))
+        <link rel="stylesheet" href="{{ asset('css/' . $userType . '-dashboard.css') }}">
+    @else
+        <link rel="stylesheet" href="{{ asset('css/brand-dashboard.css') }}">
+    @endif
 </head>
-<body class="font-sans antialiased bg-gray-50">
-    <div class="min-h-screen">
-        <!-- Navigation -->
-        <nav class="bg-white shadow-sm border-b border-gray-200">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between h-16">
-                    <div class="flex items-center">
-                        <!-- Logo -->
-                        <div class="flex-shrink-0 flex items-center">
-                            <a href="@yield('dashboard-route')" class="text-xl font-bold text-primary-600">
-                                Brand Influencer Connect
-                            </a>
-                        </div>
+<body>
+    <!-- Navigation -->
+    <div class="nav-container">
+        <nav class="navbar">
+            <a href="@yield('dashboard-route')" class="nav-brand">
+                Brand Influencer Connect
+            </a>
 
-                        <!-- Navigation Links -->
-                        <div class="hidden space-x-8 sm:-my-px sm:ml-10 sm:flex">
-                            @yield('nav-links')
-                        </div>
-                    </div>
-
-                    <!-- Settings Dropdown -->
-                    <div class="hidden sm:flex sm:items-center sm:ml-6">
-                        <div class="ml-3 relative">
-                            <div class="flex items-center space-x-4">
-                                <span class="text-sm font-medium text-gray-700">@yield('user-name')</span>
-                                <form method="POST" action="@yield('logout-route')">
-                                    @csrf
-                                    <button type="submit" class="text-sm text-gray-500 hover:text-gray-700">
-                                        Logout
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+            <ul class="nav-links">
+                @yield('nav-links')
+                <li><span>@yield('user-name')</span></li>
+                <li>
+                    <form method="POST" action="@yield('logout-route')" style="display: inline;">
+                        @csrf
+                        <button type="submit" class="logout-btn">
+                            Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
         </nav>
+    </div>
 
-        <!-- Page Heading -->
+    <!-- Main Content -->
+    <div class="main-content">
         @hasSection('header')
-            <header class="bg-white shadow">
-                <div class="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
-                    @yield('header')
-                </div>
-            </header>
+            <div class="page-header">
+                @yield('header')
+            </div>
         @endif
 
-        <!-- Page Content -->
-        <main class="py-12">
-            <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                @yield('content')
-            </div>
-        </main>
+        @yield('content')
     </div>
 
     <!-- Flash Messages -->
