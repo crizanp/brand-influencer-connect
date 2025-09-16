@@ -17,11 +17,11 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
-            $table->string('contact_person')->nullable();
+            $table->string('contact_person');
             $table->string('phone')->nullable();
             $table->text('company_description')->nullable();
             $table->string('website')->nullable();
-            $table->string('industry')->nullable();
+            $table->string('industry');
             $table->string('logo')->nullable();
             $table->enum('status', ['active', 'inactive', 'pending'])->default('pending');
             $table->rememberToken();
