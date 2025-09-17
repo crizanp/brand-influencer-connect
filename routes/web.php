@@ -63,6 +63,8 @@ Route::prefix('influencer')->name('influencer.')->group(function () {
     // Google OAuth routes
     Route::get('/google/redirect', [InfluencerAuthController::class, 'redirectToGoogle'])->name('google.redirect');
     Route::get('/google/callback', [InfluencerAuthController::class, 'handleGoogleCallback'])->name('google.callback');
+    Route::get('/complete-profile', [InfluencerAuthController::class, 'showCompleteProfileForm'])->name('complete.profile');
+    Route::post('/complete-profile', [InfluencerAuthController::class, 'completeProfile'])->name('complete.profile.submit');
 });
 
 // Admin Authentication Routes
