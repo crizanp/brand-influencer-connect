@@ -23,10 +23,25 @@ Route::prefix('brand')->name('brand.')->group(function () {
     });
     
     // Authenticated routes
-    Route::middleware('auth:brand')->group(function () {
+    Route::middleware(['auth:brand', 'brand.verified'])->group(function () {
         Route::get('/dashboard', [BrandDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [BrandAuthController::class, 'logout'])->name('logout');
     });
+    
+    // Google OAuth routes
+    Route::get('/google/redirect', [BrandAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/google/callback', [BrandAuthController::class, 'handleGoogleCallback'])->name('google.callback');
+    
+    // Email verification routes
+    Route::get('/email/verify', function () {
+        return view('auth.brand.verify-email');
+    })->middleware('auth:brand')->name('verification.notice');
+    
+    Route::get('/email/verify/{id}/{hash}', [BrandAuthController::class, 'verifyEmail'])
+        ->middleware(['auth:brand', 'signed'])->name('verification.verify');
+    
+    Route::post('/email/verification-notification', [BrandAuthController::class, 'resendVerificationEmail'])
+        ->middleware(['auth:brand', 'throttle:6,1'])->name('verification.send');
 });
 
 // Influencer Authentication Routes
@@ -44,6 +59,10 @@ Route::prefix('influencer')->name('influencer.')->group(function () {
         Route::get('/dashboard', [InfluencerDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [InfluencerAuthController::class, 'logout'])->name('logout');
     });
+    
+    // Google OAuth routes
+    Route::get('/google/redirect', [InfluencerAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/google/callback', [InfluencerAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 });
 
 // Admin Authentication Routes
@@ -59,4 +78,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [AdminAuthController::class, 'logout'])->name('logout');
     });
+    
+    // Google OAuth routes
+    Route::get('/google/redirect', [AdminAuthController::class, 'redirectToGoogle'])->name('google.redirect');
+    Route::get('/google/callback', [AdminAuthController::class, 'handleGoogleCallback'])->name('google.callback');
 });

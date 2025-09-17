@@ -3,10 +3,14 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Models\Brand;
+use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Foundation\Auth\EmailVerificationRequest;
 
 class BrandAuthController extends Controller
 {
@@ -75,6 +79,12 @@ class BrandAuthController extends Controller
 
         Auth::guard('brand')->login($brand);
 
+        // Send email verification if not verified
+        if (!$brand->hasVerifiedEmail()) {
+            event(new Registered($brand));
+            return redirect()->route('brand.verification.notice');
+        }
+
         return redirect()->route('brand.dashboard');
     }
 
@@ -89,5 +99,84 @@ class BrandAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('brand.login');
+    }
+
+    /**
+     * Redirect to Google OAuth.
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->redirect();
+    }
+
+    /**
+     * Handle Google OAuth callback.
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->user();
+            
+            // Check if brand already exists
+            $brand = Brand::where('email', $googleUser->getEmail())->first();
+            
+            if ($brand) {
+                // Mark email as verified since it's from Google
+                if (!$brand->hasVerifiedEmail()) {
+                    $brand->markEmailAsVerified();
+                }
+                Auth::guard('brand')->login($brand);
+            } else {
+                // Create new brand account
+                $brand = Brand::create([
+                    'company_name' => $googleUser->getName(),
+                    'email' => $googleUser->getEmail(),
+                    'contact_person' => $googleUser->getName(),
+                    'industry' => 'technology', // Default industry
+                    'password' => Hash::make(str()->random(16)), // Random password
+                    'email_verified_at' => now(), // Auto-verify Google accounts
+                    'status' => 'active'
+                ]);
+                
+                Auth::guard('brand')->login($brand);
+            }
+            
+            return redirect()->route('brand.dashboard');
+            
+        } catch (\Exception $e) {
+            return redirect()->route('brand.login')->with('error', 'Google authentication failed.');
+        }
+    }
+
+    /**
+     * Verify email address.
+     */
+    public function verifyEmail(Request $request)
+    {
+        $brand = Brand::findOrFail($request->route('id'));
+        
+        if (!hash_equals((string) $request->route('hash'), sha1($brand->getEmailForVerification()))) {
+            abort(403);
+        }
+        
+        $brand->markEmailAsVerified();
+        
+        return redirect()->route('brand.dashboard')->with('success', 'Email verified successfully!');
+    }
+
+    /**
+     * Resend verification email.
+     */
+    public function resendVerificationEmail(Request $request)
+    {
+        $brand = Auth::guard('brand')->user();
+        
+        if ($brand->hasVerifiedEmail()) {
+            return redirect()->route('brand.dashboard');
+        }
+        
+        $brand->sendEmailVerificationNotification();
+        
+        return back()->with('status', 'verification-link-sent');
     }
 }
