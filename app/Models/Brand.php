@@ -28,6 +28,10 @@ class Brand extends Authenticatable implements MustVerifyEmail
         'industry',
         'logo',
         'status',
+        'verification_code',
+        'verification_code_expires_at',
+        'password_reset_code',
+        'password_reset_expires_at',
     ];
 
     /**
