@@ -20,6 +20,12 @@ Route::prefix('brand')->name('brand.')->group(function () {
         Route::post('/login', [BrandAuthController::class, 'login'])->name('login.submit');
         Route::get('/register', [BrandAuthController::class, 'showRegistrationForm'])->name('register');
         Route::post('/register', [BrandAuthController::class, 'register'])->name('register.submit');
+        
+        // Forgot password routes
+        Route::get('/forgot-password', [BrandAuthController::class, 'showForgotPasswordForm'])->name('password.request');
+        Route::post('/forgot-password', [BrandAuthController::class, 'sendPasswordResetCode'])->name('password.email');
+        Route::get('/reset-password', [BrandAuthController::class, 'showResetPasswordForm'])->name('password.reset');
+        Route::post('/reset-password', [BrandAuthController::class, 'resetPassword'])->name('password.update');
     });
     
     // Authenticated routes
@@ -47,6 +53,12 @@ Route::prefix('influencer')->name('influencer.')->group(function () {
         Route::post('/login', [InfluencerAuthController::class, 'login'])->name('login.submit');
         Route::get('/register', [InfluencerAuthController::class, 'showRegistrationForm'])->name('register');
         Route::post('/register', [InfluencerAuthController::class, 'register'])->name('register.submit');
+        
+        // Forgot password routes
+        Route::get('/forgot-password', [InfluencerAuthController::class, 'showForgotPasswordForm'])->name('password.request');
+        Route::post('/forgot-password', [InfluencerAuthController::class, 'sendPasswordResetCode'])->name('password.email');
+        Route::get('/reset-password', [InfluencerAuthController::class, 'showResetPasswordForm'])->name('password.reset');
+        Route::post('/reset-password', [InfluencerAuthController::class, 'resetPassword'])->name('password.update');
     });
     
     // Authenticated routes

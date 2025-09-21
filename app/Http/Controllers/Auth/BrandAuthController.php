@@ -90,6 +90,24 @@ class BrandAuthController extends Controller
     }
 
     /**
+     * Show the email verification form.
+     */
+    public function showVerificationForm()
+    {
+        $brand = Auth::guard('brand')->user();
+        
+        if (!$brand) {
+            return redirect()->route('brand.login')->with('error', 'Please login first.');
+        }
+
+        if ($brand->hasVerifiedEmail()) {
+            return redirect()->route('brand.dashboard')->with('success', 'Email already verified!');
+        }
+
+        return view('auth.brand.verify-email');
+    }
+
+    /**
      * Handle brand logout.
      */
     public function logout(Request $request)
@@ -181,6 +199,101 @@ class BrandAuthController extends Controller
         \Mail::send('emails.brand-verification-code', $data, function($message) use ($brand) {
             $message->to($brand->email, $brand->company_name)
                     ->subject('Verify Your Brand Account - Verification Code');
+        });
+    }
+
+    /**
+     * Show forgot password form.
+     */
+    public function showForgotPasswordForm()
+    {
+        return view('auth.brand.forgot-password');
+    }
+
+    /**
+     * Send password reset code.
+     */
+    public function sendPasswordResetCode(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:brands,email'],
+        ]);
+
+        $brand = Brand::where('email', $request->email)->first();
+        
+        // Generate password reset code
+        $resetCode = sprintf('%06d', mt_rand(0, 999999));
+        
+        $brand->update([
+            'password_reset_code' => $resetCode,
+            'password_reset_expires_at' => now()->addMinutes(30),
+        ]);
+
+        // Send password reset code email
+        $this->sendPasswordResetCodeEmail($brand, $resetCode);
+        
+        return redirect()->route('brand.password.reset')->with([
+            'status' => 'password-reset-code-sent',
+            'email' => $request->email
+        ]);
+    }
+
+    /**
+     * Show reset password form.
+     */
+    public function showResetPasswordForm(Request $request)
+    {
+        return view('auth.brand.reset-password', ['email' => $request->get('email')]);
+    }
+
+    /**
+     * Reset password with code.
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:brands,email'],
+            'reset_code' => ['required', 'string', 'size:6'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $brand = Brand::where('email', $request->email)->first();
+
+        if (!$brand) {
+            return back()->withErrors(['email' => 'Brand not found.']);
+        }
+
+        if ($brand->password_reset_code !== $request->reset_code) {
+            return back()->withErrors(['reset_code' => 'Invalid reset code.']);
+        }
+
+        if ($brand->password_reset_expires_at < now()) {
+            return back()->withErrors(['reset_code' => 'Reset code has expired. Please request a new one.']);
+        }
+
+        $brand->update([
+            'password' => Hash::make($request->password),
+            'password_reset_code' => null,
+            'password_reset_expires_at' => null,
+        ]);
+
+        return redirect()->route('brand.login')->with('success', 'Password reset successfully! You can now login with your new password.');
+    }
+
+    /**
+     * Send password reset code email.
+     */
+    private function sendPasswordResetCodeEmail($brand, $resetCode)
+    {
+        $data = [
+            'reset_code' => $resetCode,
+            'company_name' => $brand->company_name,
+            'expires_at' => $brand->password_reset_expires_at->format('H:i'),
+        ];
+
+        \Mail::send('emails.brand-password-reset-code', $data, function($message) use ($brand) {
+            $message->to($brand->email, $brand->company_name)
+                    ->subject('Password Reset Code - Brand Account');
         });
     }
 }

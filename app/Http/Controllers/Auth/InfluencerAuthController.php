@@ -98,6 +98,24 @@ class InfluencerAuthController extends Controller
     }
 
     /**
+     * Show the email verification form.
+     */
+    public function showVerificationForm()
+    {
+        $influencer = Auth::guard('influencer')->user();
+        
+        if (!$influencer) {
+            return redirect()->route('influencer.login')->with('error', 'Please login first.');
+        }
+
+        if ($influencer->hasVerifiedEmail()) {
+            return redirect()->route('influencer.dashboard')->with('success', 'Email already verified!');
+        }
+
+        return view('auth.influencer.verify-email');
+    }
+
+    /**
      * Handle influencer logout.
      */
     public function logout(Request $request)
@@ -189,6 +207,101 @@ class InfluencerAuthController extends Controller
         Mail::send('emails.influencer-verification-code', $data, function($message) use ($influencer) {
             $message->to($influencer->email, $influencer->first_name . ' ' . $influencer->last_name)
                     ->subject('Verify Your Influencer Account - Verification Code');
+        });
+    }
+
+    /**
+     * Show forgot password form.
+     */
+    public function showForgotPasswordForm()
+    {
+        return view('auth.influencer.forgot-password');
+    }
+
+    /**
+     * Send password reset code.
+     */
+    public function sendPasswordResetCode(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:influencers,email'],
+        ]);
+
+        $influencer = Influencer::where('email', $request->email)->first();
+        
+        // Generate password reset code
+        $resetCode = sprintf('%06d', mt_rand(0, 999999));
+        
+        $influencer->update([
+            'password_reset_code' => $resetCode,
+            'password_reset_expires_at' => now()->addMinutes(30),
+        ]);
+
+        // Send password reset code email
+        $this->sendPasswordResetCodeEmail($influencer, $resetCode);
+        
+        return redirect()->route('influencer.password.reset')->with([
+            'status' => 'password-reset-code-sent',
+            'email' => $request->email
+        ]);
+    }
+
+    /**
+     * Show reset password form.
+     */
+    public function showResetPasswordForm(Request $request)
+    {
+        return view('auth.influencer.reset-password', ['email' => $request->get('email')]);
+    }
+
+    /**
+     * Reset password with code.
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'email' => ['required', 'email', 'exists:influencers,email'],
+            'reset_code' => ['required', 'string', 'size:6'],
+            'password' => ['required', 'string', 'min:8', 'confirmed'],
+        ]);
+
+        $influencer = Influencer::where('email', $request->email)->first();
+
+        if (!$influencer) {
+            return back()->withErrors(['email' => 'Influencer not found.']);
+        }
+
+        if ($influencer->password_reset_code !== $request->reset_code) {
+            return back()->withErrors(['reset_code' => 'Invalid reset code.']);
+        }
+
+        if ($influencer->password_reset_expires_at < now()) {
+            return back()->withErrors(['reset_code' => 'Reset code has expired. Please request a new one.']);
+        }
+
+        $influencer->update([
+            'password' => Hash::make($request->password),
+            'password_reset_code' => null,
+            'password_reset_expires_at' => null,
+        ]);
+
+        return redirect()->route('influencer.login')->with('success', 'Password reset successfully! You can now login with your new password.');
+    }
+
+    /**
+     * Send password reset code email.
+     */
+    private function sendPasswordResetCodeEmail($influencer, $resetCode)
+    {
+        $data = [
+            'reset_code' => $resetCode,
+            'full_name' => $influencer->first_name . ' ' . $influencer->last_name,
+            'expires_at' => $influencer->password_reset_expires_at->format('H:i'),
+        ];
+
+        Mail::send('emails.influencer-password-reset-code', $data, function($message) use ($influencer) {
+            $message->to($influencer->email, $influencer->first_name . ' ' . $influencer->last_name)
+                    ->subject('Password Reset Code - Influencer Account');
         });
     }
 }

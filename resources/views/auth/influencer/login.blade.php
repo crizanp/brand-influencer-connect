@@ -49,7 +49,7 @@
                 <span class="ml-2 text-sm text-gray-600">Remember me</span>
             </label>
 
-            <a href="#" class="text-sm text-secondary-600 hover:text-secondary-500">
+            <a href="{{ route('influencer.password.request') }}" class="text-sm text-secondary-600 hover:text-secondary-500">
                 Forgot password?
             </a>
         </div>
