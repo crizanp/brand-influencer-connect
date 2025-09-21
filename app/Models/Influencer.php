@@ -34,6 +34,10 @@ class Influencer extends Authenticatable implements MustVerifyEmail
         'engagement_rate',
         'media_kit',
         'status',
+        'verification_code',
+        'verification_code_expires_at',
+        'password_reset_code',
+        'password_reset_expires_at',
     ];
 
     /**
@@ -60,6 +64,8 @@ class Influencer extends Authenticatable implements MustVerifyEmail
             'social_media_platforms' => 'json',
             'categories' => 'json',
             'engagement_rate' => 'decimal:2',
+            'verification_code_expires_at' => 'datetime',
+            'password_reset_expires_at' => 'datetime',
         ];
     }
 

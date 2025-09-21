@@ -54,6 +54,8 @@ class Brand extends Authenticatable implements MustVerifyEmail
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'verification_code_expires_at' => 'datetime',
+            'password_reset_expires_at' => 'datetime',
         ];
     }
 

@@ -8,6 +8,7 @@ use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Validation\ValidationException;
 
 class BrandAuthController extends Controller
@@ -65,6 +66,9 @@ class BrandAuthController extends Controller
             'industry' => ['required', 'string', 'max:255'],
         ]);
 
+        // Generate verification code
+        $verificationCode = sprintf('%06d', mt_rand(0, 999999));
+
         $brand = \App\Models\Brand::create([
             'company_name' => $request->company_name,
             'email' => $request->email,
@@ -73,17 +77,16 @@ class BrandAuthController extends Controller
             'phone' => $request->phone,
             'industry' => $request->industry,
             'status' => 'pending',
+            'verification_code' => $verificationCode,
+            'verification_code_expires_at' => now()->addMinutes(30),
         ]);
+
+        // Send verification code email
+        $this->sendVerificationCode($brand, $verificationCode);
 
         Auth::guard('brand')->login($brand);
 
-        // Send email verification if not verified
-        if (!$brand->hasVerifiedEmail()) {
-            event(new Registered($brand));
-            return redirect()->route('brand.verification.notice');
-        }
-
-        return redirect()->route('brand.dashboard');
+        return redirect()->route('brand.verification.notice')->with('status', 'verification-code-sent');
     }
 
     /**
@@ -100,34 +103,84 @@ class BrandAuthController extends Controller
     }
 
     /**
-     * Verify email address.
+     * Verify email address with code.
      */
     public function verifyEmail(Request $request)
     {
-        $brand = Brand::findOrFail($request->route('id'));
+        $request->validate([
+            'verification_code' => ['required', 'string', 'size:6'],
+        ]);
+
+        $brand = Auth::guard('brand')->user();
         
-        if (!hash_equals((string) $request->route('hash'), sha1($brand->getEmailForVerification()))) {
-            abort(403);
+        if (!$brand) {
+            return redirect()->route('brand.login')->with('error', 'Please login first.');
         }
-        
+
+        if ($brand->hasVerifiedEmail()) {
+            return redirect()->route('brand.dashboard')->with('success', 'Email already verified!');
+        }
+
+        if ($brand->verification_code !== $request->verification_code) {
+            return back()->withErrors(['verification_code' => 'Invalid verification code.']);
+        }
+
+        if ($brand->verification_code_expires_at < now()) {
+            return back()->withErrors(['verification_code' => 'Verification code has expired. Please request a new one.']);
+        }
+
         $brand->markEmailAsVerified();
+        $brand->update([
+            'verification_code' => null,
+            'verification_code_expires_at' => null,
+        ]);
         
         return redirect()->route('brand.dashboard')->with('success', 'Email verified successfully!');
     }
 
     /**
-     * Resend verification email.
+     * Resend verification code.
      */
     public function resendVerificationEmail(Request $request)
     {
         $brand = Auth::guard('brand')->user();
         
+        if (!$brand) {
+            return redirect()->route('brand.login')->with('error', 'Please login first.');
+        }
+        
         if ($brand->hasVerifiedEmail()) {
             return redirect()->route('brand.dashboard');
         }
         
-        $brand->sendEmailVerificationNotification();
+        // Generate new verification code
+        $verificationCode = sprintf('%06d', mt_rand(0, 999999));
         
-        return back()->with('status', 'verification-link-sent');
+        $brand->update([
+            'verification_code' => $verificationCode,
+            'verification_code_expires_at' => now()->addMinutes(30),
+        ]);
+
+        // Send verification code email
+        $this->sendVerificationCode($brand, $verificationCode);
+        
+        return back()->with('status', 'verification-code-sent');
+    }
+
+    /**
+     * Send verification code email.
+     */
+    private function sendVerificationCode($brand, $verificationCode)
+    {
+        $data = [
+            'verification_code' => $verificationCode,
+            'company_name' => $brand->company_name,
+            'expires_at' => $brand->verification_code_expires_at->format('H:i'),
+        ];
+
+        \Mail::send('emails.brand-verification-code', $data, function($message) use ($brand) {
+            $message->to($brand->email, $brand->company_name)
+                    ->subject('Verify Your Brand Account - Verification Code');
+        });
     }
 }
