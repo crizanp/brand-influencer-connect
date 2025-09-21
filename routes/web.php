@@ -29,14 +29,13 @@ Route::prefix('brand')->name('brand.')->group(function () {
     });
     
     // Email verification routes
-    Route::get('/email/verify', function () {
-        return view('auth.brand.verify-email');
-    })->middleware('auth:brand')->name('verification.notice');
+    Route::get('/verify-email', [BrandAuthController::class, 'showVerificationForm'])
+        ->middleware('auth:brand')->name('verification.notice');
     
-    Route::get('/email/verify/{id}/{hash}', [BrandAuthController::class, 'verifyEmail'])
-        ->middleware(['auth:brand', 'signed'])->name('verification.verify');
+    Route::post('/verify-email', [BrandAuthController::class, 'verifyEmail'])
+        ->middleware('auth:brand')->name('verification.verify');
     
-    Route::post('/email/verification-notification', [BrandAuthController::class, 'resendVerificationEmail'])
+    Route::post('/resend-verification', [BrandAuthController::class, 'resendVerificationCode'])
         ->middleware(['auth:brand', 'throttle:6,1'])->name('verification.send');
 });
 
