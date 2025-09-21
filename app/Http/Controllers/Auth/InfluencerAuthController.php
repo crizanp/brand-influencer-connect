@@ -58,15 +58,11 @@ class InfluencerAuthController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
+            'username' => ['required', 'string', 'max:255', 'unique:influencers'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:influencers'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'niche' => ['required', 'string', 'in:fashion,beauty,fitness,technology,travel,food,lifestyle,gaming,music,other'],
+            'phone' => ['nullable', 'string', 'max:20'],
             'bio' => ['nullable', 'string', 'max:1000'],
-            'instagram_handle' => ['nullable', 'string', 'max:255'],
-            'youtube_channel' => ['nullable', 'string', 'max:255'],
-            'tiktok_handle' => ['nullable', 'string', 'max:255'],
-            'twitter_handle' => ['nullable', 'string', 'max:255'],
-            'followers_count' => ['nullable', 'integer', 'min:0'],
         ]);
 
         // Generate verification code
@@ -75,15 +71,11 @@ class InfluencerAuthController extends Controller
         $influencer = Influencer::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
+            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'niche' => $request->niche,
+            'phone' => $request->phone,
             'bio' => $request->bio,
-            'instagram_handle' => $request->instagram_handle,
-            'youtube_channel' => $request->youtube_channel,
-            'tiktok_handle' => $request->tiktok_handle,
-            'twitter_handle' => $request->twitter_handle,
-            'followers_count' => $request->followers_count,
             'status' => 'pending',
             'verification_code' => $verificationCode,
             'verification_code_expires_at' => now()->addMinutes(30),

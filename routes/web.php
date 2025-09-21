@@ -66,6 +66,16 @@ Route::prefix('influencer')->name('influencer.')->group(function () {
         Route::get('/dashboard', [InfluencerDashboardController::class, 'index'])->name('dashboard');
         Route::post('/logout', [InfluencerAuthController::class, 'logout'])->name('logout');
     });
+    
+    // Email verification routes
+    Route::get('/verify-email', [InfluencerAuthController::class, 'showVerificationForm'])
+        ->middleware('auth:influencer')->name('verification.notice');
+    
+    Route::post('/verify-email', [InfluencerAuthController::class, 'verifyEmail'])
+        ->middleware('auth:influencer')->name('verification.verify');
+    
+    Route::post('/resend-verification', [InfluencerAuthController::class, 'resendVerificationCode'])
+        ->middleware(['auth:influencer', 'throttle:6,1'])->name('verification.send');
 });
 
 // Admin Authentication Routes
