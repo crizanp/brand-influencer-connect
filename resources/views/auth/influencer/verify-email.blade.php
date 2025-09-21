@@ -9,12 +9,12 @@
 </div>
 
 <div style="margin-bottom: 25px;">
-    <div style="background: #f0f9ff; border: 1px solid #0ea5e9; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+    <div style="background: #fef7f0; border: 1px solid #f97316; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
         <div style="display: flex; align-items: center; margin-bottom: 10px;">
-            <div style="background: #0ea5e9; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 14px;">ℹ</div>
-            <h3 style="color: #0c4a6e; margin: 0; font-size: 16px;">Email Verification Required</h3>
+            <div style="background: #f97316; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-right: 10px; font-size: 14px;">ℹ</div>
+            <h3 style="color: #9a3412; margin: 0; font-size: 16px;">Email Verification Required</h3>
         </div>
-        <p style="color: #0c4a6e; margin: 0; font-size: 14px; line-height: 1.5;">
+        <p style="color: #9a3412; margin: 0; font-size: 14px; line-height: 1.5;">
             We've sent a 6-digit verification code to your email address. Please enter the code below to verify your account.
             The code will expire in 30 minutes.
         </p>
@@ -43,7 +43,7 @@
     @endif
 </div>
 
-<form method="POST" action="{{ route('brand.verification.verify') }}" style="margin-bottom: 20px;">
+<form method="POST" action="{{ route('influencer.verification.verify') }}" style="margin-bottom: 20px;">
     @csrf
     <div class="form-group">
         <label for="verification_code">Verification Code</label>
@@ -64,7 +64,7 @@
 </form>
 
 <div style="display: flex; gap: 10px; margin-bottom: 20px;">
-    <form method="POST" action="{{ route('brand.verification.send') }}" style="flex: 1;">
+    <form method="POST" action="{{ route('influencer.verification.send') }}" style="flex: 1;">
         @csrf
         <button type="submit" class="btn-secondary" style="width: 100%;">
             Resend Code
@@ -73,9 +73,9 @@
 </div>
 
 <div class="auth-footer" style="border-top: none; padding-top: 0;">
-    <p>Already verified? <a href="{{ route('brand.dashboard') }}">Go to Dashboard</a></p>
+    <p>Already verified? <a href="{{ route('influencer.dashboard') }}">Go to Dashboard</a></p>
     
-    <form method="POST" action="{{ route('brand.logout') }}" style="margin-top: 15px;">
+    <form method="POST" action="{{ route('influencer.logout') }}" style="margin-top: 15px;">
         @csrf
         <button type="submit" style="background: none; border: none; color: #667eea; text-decoration: underline; cursor: pointer; font-size: 14px;">
             Log Out
