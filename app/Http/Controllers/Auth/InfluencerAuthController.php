@@ -9,7 +9,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
-use Laravel\Socialite\Facades\Socialite;
 
 class InfluencerAuthController extends Controller
 {
@@ -31,16 +30,14 @@ class InfluencerAuthController extends Controller
             'password' => ['required'],
         ]);
 
-        $credentials = $request->only('email', 'password');
-
-        if (Auth::guard('influencer')->attempt($credentials, $request->boolean('remember'))) {
+        if (Auth::guard('influencer')->attempt($request->only('email', 'password'), $request->filled('remember'))) {
             $request->session()->regenerate();
-            
+
             return redirect()->intended(route('influencer.dashboard'));
         }
 
         throw ValidationException::withMessages([
-            'email' => __('The provided credentials do not match our records.'),
+            'email' => __('auth.failed'),
         ]);
     }
 
@@ -60,21 +57,29 @@ class InfluencerAuthController extends Controller
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
-            'username' => ['required', 'string', 'max:255', 'unique:influencers'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:influencers'],
             'password' => ['required', 'string', 'min:8', 'confirmed'],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'bio' => ['nullable', 'string'],
+            'niche' => ['required', 'string', 'in:fashion,beauty,fitness,technology,travel,food,lifestyle,gaming,music,other'],
+            'bio' => ['nullable', 'string', 'max:1000'],
+            'instagram_handle' => ['nullable', 'string', 'max:255'],
+            'youtube_channel' => ['nullable', 'string', 'max:255'],
+            'tiktok_handle' => ['nullable', 'string', 'max:255'],
+            'twitter_handle' => ['nullable', 'string', 'max:255'],
+            'followers_count' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $influencer = \App\Models\Influencer::create([
+        $influencer = Influencer::create([
             'first_name' => $request->first_name,
             'last_name' => $request->last_name,
-            'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'phone' => $request->phone,
+            'niche' => $request->niche,
             'bio' => $request->bio,
+            'instagram_handle' => $request->instagram_handle,
+            'youtube_channel' => $request->youtube_channel,
+            'tiktok_handle' => $request->tiktok_handle,
+            'twitter_handle' => $request->twitter_handle,
+            'followers_count' => $request->followers_count,
             'status' => 'pending',
         ]);
 
@@ -100,101 +105,5 @@ class InfluencerAuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('influencer.login');
-    }
-
-    /**
-     * Redirect to Google OAuth.
-     */
-    public function redirectToGoogle()
-    {
-        return Socialite::driver('google')->redirect();
-    }
-
-    /**
-     * Handle Google OAuth callback for influencers.
-     */
-    public function handleGoogleCallback()
-    {
-        try {
-            $googleUser = Socialite::driver('google')->user();
-            
-            // Check if influencer already exists
-            $influencer = Influencer::where('email', $googleUser->getEmail())->first();
-            
-            if ($influencer) {
-                // Mark email as verified since it's from Google
-                if (!$influencer->hasVerifiedEmail()) {
-                    $influencer->markEmailAsVerified();
-                }
-                Auth::guard('influencer')->login($influencer);
-                return redirect()->route('influencer.dashboard');
-            } else {
-                // Store Google user data in session for completion
-                session([
-                    'google_user' => [
-                        'name' => $googleUser->getName(),
-                        'email' => $googleUser->getEmail(),
-                        'avatar' => $googleUser->getAvatar(),
-                    ]
-                ]);
-                
-                return redirect()->route('influencer.complete.profile');
-            }
-            
-        } catch (\Exception $e) {
-            return redirect()->route('influencer.login')->with('error', 'Google authentication failed.');
-        }
-    }
-
-    /**
-     * Show profile completion form for Google users.
-     */
-    public function showCompleteProfileForm()
-    {
-        if (!session('google_user')) {
-            return redirect()->route('influencer.register');
-        }
-        
-        return view('auth.influencer.complete-profile', [
-            'googleUser' => session('google_user')
-        ]);
-    }
-
-    /**
-     * Complete profile for Google users.
-     */
-    public function completeProfile(Request $request)
-    {
-        if (!session('google_user')) {
-            return redirect()->route('influencer.register');
-        }
-
-        $request->validate([
-            'first_name' => ['required', 'string', 'max:255'],
-            'last_name' => ['required', 'string', 'max:255'],
-            'niche' => ['required', 'string', 'max:255'],
-            'bio' => ['nullable', 'string', 'max:1000'],
-        ]);
-
-        $googleUser = session('google_user');
-        
-        // Create influencer account with Google data
-        $influencer = Influencer::create([
-            'first_name' => $request->first_name,
-            'last_name' => $request->last_name,
-            'email' => $googleUser['email'],
-            'niche' => $request->niche,
-            'bio' => $request->bio,
-            'password' => Hash::make(str()->random(16)), // Random password
-            'email_verified_at' => now(), // Auto-verify Google accounts
-            'status' => 'active'
-        ]);
-        
-        // Clear Google user data from session
-        session()->forget('google_user');
-        
-        Auth::guard('influencer')->login($influencer);
-        
-        return redirect()->route('influencer.dashboard');
     }
 }
