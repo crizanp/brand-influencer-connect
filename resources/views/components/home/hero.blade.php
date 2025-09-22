@@ -30,7 +30,36 @@
             </div>
             
             <div class="hero-image">
-                <div class="hero-placeholder"></div>
+                <video class="hero-video" controls autoplay muted loop playsinline preload="metadata" onloadstart="console.log('Video loading started')" oncanplay="console.log('Video can play')" onerror="console.log('Video error'); document.querySelector('.hero-placeholder').style.display = 'flex';">
+                    <source src="{{ asset('video/hero.mp4') }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+                <script>
+                    // Diagnostic helpers: log the resolved video URL and attach events
+                    (function(){
+                        try {
+                            var v = document.querySelector('.hero-video');
+                            if (!v) return;
+                            var srcEl = v.querySelector('source');
+                            var url = srcEl ? srcEl.getAttribute('src') : v.getAttribute('src');
+                            console.log('[hero-video] resolved src ->', url);
+
+                            v.addEventListener('error', function(ev){
+                                console.error('[hero-video] error event', ev);
+                                document.querySelector('.hero-placeholder').style.display = 'flex';
+                            });
+                            v.addEventListener('stalled', function(){ console.warn('[hero-video] stalled'); });
+                            v.addEventListener('loadedmetadata', function(){ console.log('[hero-video] loadedmetadata'); });
+                            v.addEventListener('canplay', function(){ console.log('[hero-video] canplay fired'); document.querySelector('.hero-placeholder').style.display = 'none'; });
+                        } catch(e) { console.error('[hero-video] diagnostic script failed', e); }
+                    })();
+                </script>
+                <!-- Fallback placeholder (hidden by default, shown on error) -->
+                <div class="hero-placeholder" style="display: none;">
+                    <div class="placeholder-content">
+                        <p>Video placeholder</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -114,6 +143,62 @@
 
     .hero-image {
         position: relative;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        background: #f8f9fa;
+    }
+
+    .hero-video {
+        width: 100%;
+        height: 400px;
+        object-fit: cover;
+        border-radius: 20px;
+        display: block;
+        background: #000;
+    }
+
+    .hero-placeholder {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 400px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        border-radius: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 18px;
+        font-weight: 600;
+    }
+
+    .hero-placeholder::before {
+        content: '';
+        position: absolute;
+        width: 200px;
+        height: 200px;
+        background: rgba(255,255,255,0.1);
+        border-radius: 50%;
+        top: 20%;
+        right: 20%;
+    }
+
+    .hero-placeholder::after {
+        content: '';
+        position: absolute;
+        width: 150px;
+        height: 150px;
+        background: rgba(255,255,255,0.15);
+        border-radius: 50%;
+        bottom: 30%;
+        left: 30%;
+    }
+
+    .placeholder-content {
+        z-index: 1;
+        position: relative;
     }
 
     .hero-image img {
@@ -172,6 +257,19 @@
         .hero-buttons {
             flex-direction: column;
             align-items: center;
+        }
+
+        .hero-video,
+        .hero-placeholder {
+            height: 250px;
+        }
+    }
+
+    /* Tablet Responsive */
+    @media (max-width: 992px) and (min-width: 769px) {
+        .hero-video,
+        .hero-placeholder {
+            height: 300px;
         }
     }
 </style>
