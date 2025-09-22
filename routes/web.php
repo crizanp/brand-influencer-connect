@@ -12,6 +12,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+// General registration/login selection page
+Route::get('/register', function () {
+    return view('auth.register-select');
+})->name('register');
+
+Route::get('/login', function () {
+    return view('auth.login-select');
+})->name('login');
+
 // Brand Authentication Routes
 Route::prefix('brand')->name('brand.')->group(function () {
     // Guest routes (not authenticated)
